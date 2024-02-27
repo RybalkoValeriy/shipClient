@@ -3,7 +3,7 @@ import "./App.css";
 import axios from "axios";
 import Ship from "./Models/Ship";
 import Table from "./components/Table";
-import { ShipForm } from "./components/ShipForm";
+import ShipForm from "./components/ShipForm";
 
 const apiEndpoint = "http://localhost:5062/api/v1/";
 
@@ -19,16 +19,26 @@ type FetchAllShipsInitAction = {
 };
 
 type FailureShipAction = {
-  type: "FAILURE_SHIP";
+  type: "FAILURE";
 };
 
 type GetAllShipsAction = {
-  type: "GET_ALL";
+  type: "FETCH_SUCCESS";
   payload: Array<Ship>;
 };
 
 type CreateShipAction = {
-  type: "CREATE_SHIP";
+  type: "CREATE_SUCCESS";
+  payload: Ship;
+};
+
+type DeleteShipAction = {
+  type: "DELETE_SUCCESS";
+  payload: string;
+};
+
+type UpdateShipAction = {
+  type: "UPDATE_SUCCESS";
   payload: Ship;
 };
 
@@ -36,7 +46,9 @@ type ShipAction =
   | FetchAllShipsInitAction
   | FailureShipAction
   | GetAllShipsAction
-  | CreateShipAction;
+  | CreateShipAction
+  | DeleteShipAction
+  | UpdateShipAction;
 
 const shipReducer = (state: ShipState, action: ShipAction): ShipState => {
   switch (action.type) {
@@ -54,18 +66,41 @@ const shipReducer = (state: ShipState, action: ShipAction): ShipState => {
         isError: true,
         error: "",
       };
-    case "GET_ALL":
+    case "FETCH_SUCCESS":
       return {
-        data: state.data,
-        isError: false,
+        data: action.payload,
         isLoading: false,
+        isError: false,
         error: "",
       };
-    case "CREATE_SHIP":
+    case "CREATE_SUCCESS":
       return {
         data: [action.payload, ...state.data],
+        isLoading: false,
         isError: false,
-        isLoading: true,
+        error: "",
+      };
+    case "DELETE_SUCCESS":
+      return {
+        data: state.data.filter((ship) => ship.code !== action.payload),
+        isLoading: false,
+        isError: false,
+        error: "",
+      };
+    case "UPDATE_SUCCESS":
+      return {
+        data: state.data.map((ship) =>
+          ship.code === action.payload.code
+            ? {
+                ...ship,
+                name: action.payload.name,
+                length: action.payload.length,
+                width: action.payload.width,
+              }
+            : ship
+        ),
+        isLoading: false,
+        isError: false,
         error: "",
       };
     default:
@@ -73,7 +108,11 @@ const shipReducer = (state: ShipState, action: ShipAction): ShipState => {
   }
 };
 
-const App = () => {
+type AppFormProps = {
+  ship?: Ship;
+};
+
+const App: React.FC<AppFormProps> = () => {
   const [ships, dispatchShips] = useReducer(shipReducer, {
     data: [],
     isLoading: false,
@@ -81,18 +120,21 @@ const App = () => {
     error: "",
   });
 
+  const [shipToEdit, setShipToEdit] = useState<Ship | undefined>();
+
   const getAllShips = useCallback(async () => {
     dispatchShips({ type: "FETCH_INIT" });
 
     try {
-      const shipsResponse = await axios.get<Ship[]>(`${apiEndpoint}ships`);
+      const shipsResponse = await axios.get<Array<Ship>>(`${apiEndpoint}ships`);
+      console.log(shipsResponse.data);
       dispatchShips({
-        type: "GET_ALL",
+        type: "FETCH_SUCCESS",
         payload: shipsResponse.data,
       });
     } catch (error) {
       dispatchShips({
-        type: "FAILURE_SHIP",
+        type: "FAILURE",
       });
     }
   }, []);
@@ -101,23 +143,67 @@ const App = () => {
     getAllShips();
   }, [getAllShips]);
 
-  const createShipHandler = (event: React.ChangeEvent<HTMLFormElement>) => {
-    console.log(event);
-    event.preventDefault();
+  const createShipHandler = async (ship: Ship) => {
+    try {
+      await axios.post(`${apiEndpoint}ships`, ship);
+
+      dispatchShips({ type: "CREATE_SUCCESS", payload: ship });
+    } catch (error) {
+      dispatchShips({ type: "FAILURE" });
+    }
   };
+
+  const removeShipHandler = async (code: string) => {
+    try {
+      await axios.delete(`${apiEndpoint}ships\\${code}`);
+
+      dispatchShips({ type: "DELETE_SUCCESS", payload: code });
+    } catch (error) {
+      dispatchShips({ type: "FAILURE" });
+    }
+  };
+
+  const updateShipHandler = async (ship: Ship) => {
+    try {
+      await axios.put(`${apiEndpoint}ships\\${ship.code}`, ship);
+
+      dispatchShips({ type: "UPDATE_SUCCESS", payload: ship });
+
+      unSelectShipToEdit();
+    } catch (error) {
+      dispatchShips({ type: "FAILURE" });
+    }
+  };
+
+  const unSelectShipToEdit = () => setShipToEdit(undefined);
+
+  const selectShipToEdit = (ship: Ship) => setShipToEdit(ship);
+
+  const onFormSubmitHandler = (ship: Ship) =>
+    shipToEdit ? updateShipHandler(ship) : createShipHandler(ship);
 
   return (
     <>
       <h1>Ship management</h1>
       <div>
-        <ShipForm onSubmitForm={createShipHandler} />
+        <ShipForm
+          onFormSubmit={onFormSubmitHandler}
+          onCancelSubmit={unSelectShipToEdit}
+          ship={shipToEdit}
+        />
       </div>
       {ships.isLoading ? (
         <p>Loading...</p>
       ) : (
         <div>
           {ships.isError && <p>Something went wrong...</p>}
-          {<Table data={ships.data} />}
+          {
+            <Table
+              data={ships.data}
+              removeShip={removeShipHandler}
+              selectShipToEdit={selectShipToEdit}
+            />
+          }
         </div>
       )}
     </>
