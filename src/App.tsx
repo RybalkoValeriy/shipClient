@@ -2,12 +2,14 @@ import { useCallback, useEffect, useReducer, useState } from "react";
 import "./App.css";
 import axios from "axios";
 import Ship from "./Models/Ship";
-import Table from "./components/Table";
+import ShipsTable from "./components/ShipsTable";
 import ShipForm from "./components/ShipForm";
+import "bootstrap/dist/css/bootstrap.min.css";
+import { Alert } from "react-bootstrap";
 
 const apiEndpoint = "http://localhost:5062/api/v1/";
 
-interface ShipState {
+export interface ShipState {
   isLoading: boolean;
   data: Ship[];
   isError: boolean;
@@ -42,7 +44,7 @@ type UpdateShipAction = {
   payload: Ship;
 };
 
-type ShipAction =
+export type ShipAction =
   | FetchAllShipsInitAction
   | FailureShipAction
   | GetAllShipsAction
@@ -50,7 +52,10 @@ type ShipAction =
   | DeleteShipAction
   | UpdateShipAction;
 
-const shipReducer = (state: ShipState, action: ShipAction): ShipState => {
+export const shipReducer = (
+  state: ShipState,
+  action: ShipAction
+): ShipState => {
   switch (action.type) {
     case "FETCH_INIT":
       return {
@@ -59,7 +64,7 @@ const shipReducer = (state: ShipState, action: ShipAction): ShipState => {
         isError: false,
         error: "",
       };
-    case "FAILURE_SHIP":
+    case "FAILURE":
       return {
         data: state.data,
         isLoading: false,
@@ -127,7 +132,6 @@ const App: React.FC<AppFormProps> = () => {
 
     try {
       const shipsResponse = await axios.get<Array<Ship>>(`${apiEndpoint}ships`);
-      console.log(shipsResponse.data);
       dispatchShips({
         type: "FETCH_SUCCESS",
         payload: shipsResponse.data,
@@ -196,9 +200,9 @@ const App: React.FC<AppFormProps> = () => {
         <p>Loading...</p>
       ) : (
         <div>
-          {ships.isError && <p>Something went wrong...</p>}
+          {ships.isError && <Alert>Something went wrong...</Alert>}
           {
-            <Table
+            <ShipsTable
               data={ships.data}
               removeShip={removeShipHandler}
               selectShipToEdit={selectShipToEdit}

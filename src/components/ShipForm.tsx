@@ -3,6 +3,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useEffect } from "react";
+import { Button, Container, Form, Row } from "react-bootstrap";
 
 const shipFormSchema = yup.object().shape({
   code: yup
@@ -47,61 +48,86 @@ const ShipForm: React.FC<ShipFormProps> = ({
   }, [isSubmitSuccessful, reset, setValue, ship]);
 
   return (
-    <div>
-      <form onSubmit={handleFromSubmit}>
-        <div>
-          <label>Code (Format: XXXX-0000-X0):</label>
-          <input
-            placeholder="code in Format: XXXX-0000-X0"
-            {...register("code")}
-          />
-          {errors?.code && <p>{errors.code.message}</p>}
-        </div>
-
-        <br />
-        <div>
-          <label>Name:</label>
-          <input placeholder="The name is required" {...register("name")} />
-          {errors?.name && <p>{errors.name.message}</p>}
-        </div>
-
-        <br />
-        <div>
-          <label>Length:</label>
-          <input
-            placeholder="The length is required min 1"
-            {...register("length")}
-          />
-          {errors?.length && <p>{errors.length.message}</p>}
-        </div>
-
-        <br />
-        <div>
-          <label>Width:</label>
-          <input
-            placeholder="The width is required min 1"
-            {...register("width")}
-          />
-          {errors?.width && <p>{errors.width.message}</p>}
-        </div>
-
-        <br />
-        <button type="submit">{ship ? "Update" : "Create"}</button>
-        {ship ? (
-          <button
-            type="reset"
-            onClick={() => {
-              onCancelSubmit();
-              reset();
-            }}
-          >
-            Reset
-          </button>
-        ) : (
-          <></>
-        )}
-      </form>
-    </div>
+    <Container fluid>
+      <Form onSubmit={handleFromSubmit}>
+        <Row>
+          <Form.Group className="mb-3" controlId="Code">
+            <Form.Label>Code (Format: XXXX-0000-X0):</Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="code in Format: XXXX-0000-X0"
+              {...register("code")}
+            />
+            {errors?.code && (
+              <Form.Text className="text-danger">
+                {errors.code.message}
+              </Form.Text>
+            )}
+          </Form.Group>
+        </Row>
+        <Row>
+          <Form.Group className="mb-3" controlId="Name">
+            <Form.Label>Name:</Form.Label>
+            <Form.Control
+              type="text"
+              placeholder="The name is required"
+              {...register("name")}
+            />
+            {errors?.name && (
+              <Form.Text className="text-danger">
+                {errors.name.message}
+              </Form.Text>
+            )}
+          </Form.Group>
+        </Row>
+        <Row>
+          <Form.Group className="mb-3" controlId="Length">
+            <Form.Label>Length:</Form.Label>
+            <Form.Control
+              type="number"
+              placeholder="The length is required min 1"
+              {...register("length")}
+            />
+            {errors?.length && (
+              <Form.Text className="text-danger">
+                {errors.length.message}
+              </Form.Text>
+            )}
+          </Form.Group>
+        </Row>
+        <Row>
+          <Form.Group className="mb-3" controlId="Width">
+            <Form.Label>Width:</Form.Label>
+            <Form.Control
+              type="number"
+              placeholder="The width is required min 1"
+              {...register("width")}
+            />
+            {errors?.width && (
+              <Form.Text className="text-danger">
+                {errors.width.message}
+              </Form.Text>
+            )}
+          </Form.Group>
+        </Row>
+        <Row>
+          <Button type="submit">{ship ? "Update" : "Create"}</Button>
+          {ship ? (
+            <Button
+              type="reset"
+              onClick={() => {
+                onCancelSubmit();
+                reset();
+              }}
+            >
+              Cancel
+            </Button>
+          ) : (
+            <></>
+          )}
+        </Row>
+      </Form>
+    </Container>
   );
 };
 
