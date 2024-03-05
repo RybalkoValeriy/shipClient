@@ -1,6 +1,7 @@
 import React from "react";
 import Ship from "../Models/Ship";
-import { Button, Table } from "react-bootstrap";
+import { Table } from "react-bootstrap";
+import { ShipRowTable } from "./ShipRowTable";
 
 type tableProps = {
   data: Ship[];
@@ -8,7 +9,7 @@ type tableProps = {
   selectShipToEdit: (ship: Ship) => void;
 };
 
-type rowProps = {
+export type rowProps = {
   item: Ship;
   id: number;
   removeShip: (code: string) => void;
@@ -35,32 +36,11 @@ const ShipsTable: React.FC<tableProps> = ({
         </thead>
         <tbody>
           {data.map((ship, id) =>
-            Row({ item: ship, id: id, removeShip, selectShipToEdit })
+            ShipRowTable({ item: ship, id: id, removeShip, selectShipToEdit })
           )}
         </tbody>
       </Table>
     </div>
-  );
-};
-
-const Row: React.FC<rowProps> = ({
-  item,
-  id,
-  removeShip,
-  selectShipToEdit,
-}) => {
-  return (
-    <tr key={id}>
-      <td>{id}</td>
-      <td>{item.code}</td>
-      <td>{item.name}</td>
-      <td>{item.length}</td>
-      <td>{item.width}</td>
-      <td>
-        <Button onClick={() => removeShip(item.code)}>Remove</Button>
-        <Button onClick={() => selectShipToEdit(item)}>Edit</Button>
-      </td>
-    </tr>
   );
 };
 
